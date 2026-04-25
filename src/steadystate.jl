@@ -124,7 +124,7 @@ Solve the stationary state based on different solvers.
 - `H`: The Hamiltonian or the Liouvillian of the system.
 - `c_ops`: The list of the collapse operators.
 - `solver`: see documentation [Solving for Steady-State Solutions](@ref doc:Solving-for-Steady-State-Solutions) for different solvers.
-- `kwargs`: The keyword arguments for the solver. When SteadyStateLinearSolver() is used, you can pass u0 as a inital guess for linear solver. u0 should be a vector corresponding to the density matrix as, for example, `u0=vec(ρ.data)`. When SteadyStateODESolver() is used, you can pass any keyword arguments for `mesolve` in `kwargs...`, but the `progress_bar`, `save_everystep`, and `saveat` will be ignored and overwritten.
+- `kwargs`: The keyword arguments for the solver. When SteadyStateLinearSolver() is used, you can pass u0 as a inital guess for linear solver. u0 should be a vector corresponding to the density matrix as, for example, `u0=vec(Matrix(ρ.data))`. When SteadyStateODESolver() is used, you can pass any keyword arguments for `mesolve` in `kwargs...`, but the `progress_bar`, `save_everystep`, and `saveat` will be ignored and overwritten.
 """
 function steadystate(
         H::AbstractQuantumObject{OpType},
