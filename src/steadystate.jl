@@ -145,7 +145,7 @@ function steadystate(
     return _steadystate(L, solver; kwargs...)
 end
 
-function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinearSolver; kwargs...)
+function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinearSolver; u0=nothing, kwargs...)
     L_tmp = L.data
     state_dimensions = L.dimensions.to.op_dims
     N = get_size(state_dimensions)[1]
@@ -167,7 +167,7 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinear
 
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
 
-    prob = LinearProblem{true}(L_tmp, v0)
+    prob = LinearProblem{true}(L_tmp, v0, u0=u0) # add u0 support for SteadyStateLinearSolver case. it can be useful for paramter sweeps when the steady state changes smoothly with the parameters.
     ρss_vec = solve(prob, solver.alg; kwargs...).u
 
     ρss = reshape(ρss_vec, N, N)
