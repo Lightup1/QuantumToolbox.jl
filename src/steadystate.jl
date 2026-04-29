@@ -31,19 +31,25 @@ struct SteadyStateEigenSolver <: SteadyStateSolver end
 
 @doc raw"""
     SteadyStateLinearSolver(
-        alg = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I))
+        alg = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I)),
+        ρ0 = nothing
     )
 
 A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillian [`SuperOperator`](@ref) using the `alg`orithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/).
 
 # Arguments
 - `alg::SciMLLinearSolveAlgorithm=KrylovJL_GMRES()`: algorithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/)
+- `ρ0=nothing`: The initial state of the system. If not specified, a random density matrix state will be generated.
 
 # Note
 Refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/) for more details about the available algorithms. For example, the preconditioners can be defined directly in the solver like: `SteadyStateLinearSolver(alg = KrylovJL_GMRES(; precs = (A, p) -> (I, Diagonal(A))))`.
 """
-Base.@kwdef struct SteadyStateLinearSolver{MT <: Union{SciMLLinearSolveAlgorithm, Nothing}} <: SteadyStateSolver
+Base.@kwdef struct SteadyStateLinearSolver{
+        MT <: Union{SciMLLinearSolveAlgorithm, Nothing}, 
+        ST <: Union{Nothing, QuantumObject},
+    } <: SteadyStateSolver
     alg::MT = KrylovJL_GMRES(; precs = (A, p) -> A isa SparseMatrixCSC ? (ilu(A, τ = 0.01), I) : (I, I))
+    ρ0::ST = nothing
 end
 
 @doc raw"""
@@ -124,7 +130,7 @@ Solve the stationary state based on different solvers.
 - `H`: The Hamiltonian or the Liouvillian of the system.
 - `c_ops`: The list of the collapse operators.
 - `solver`: see documentation [Solving for Steady-State Solutions](@ref doc:Solving-for-Steady-State-Solutions) for different solvers.
-- `kwargs`: The keyword arguments for the solver. When SteadyStateLinearSolver() is used, you can pass u0 in kwargs as a inital guess for linear solver. u0 should be a vector corresponding to the density matrix as, for example, `u0=vec(Matrix(ρ.data))`. 
+- `kwargs`: The keyword arguments for the solver. 
 """
 function steadystate(
         H::AbstractQuantumObject{OpType},
@@ -145,7 +151,7 @@ function steadystate(
     return _steadystate(L, solver; kwargs...)
 end
 
-function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinearSolver; u0=nothing, kwargs...)
+function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinearSolver; kwargs...)
     L_tmp = L.data
     state_dimensions = L.dimensions.to.op_dims
     N = get_size(state_dimensions)[1]
@@ -167,6 +173,12 @@ function _steadystate(L::QuantumObject{SuperOperator}, solver::SteadyStateLinear
 
     (haskey(kwargs, :Pl) || haskey(kwargs, :Pr)) && error("The use of preconditioners must be defined in the solver.")
 
+    u0 = if isnothing(solver.ρ0)
+        nothing
+    else
+        _, u0_data, _, _ = _handle_init_state_and_sol_type_dims(L, solver.ρ0)
+        u0_data
+    end
     prob = LinearProblem{true}(L_tmp, v0, u0=u0) # add u0 support for SteadyStateLinearSolver case. it can be useful for paramter sweeps when the steady state changes smoothly with the parameters.
     ρss_vec = solve(prob, solver.alg; kwargs...).u
 
