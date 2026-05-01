@@ -39,7 +39,7 @@ A solver which solves [`steadystate`](@ref) by finding the inverse of Liouvillia
 
 # Arguments
 - `alg::SciMLLinearSolveAlgorithm=KrylovJL_GMRES()`: algorithms given in [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/)
-- `ρ0=nothing`: The initial state of the system. If not specified, a random density matrix state will be generated.
+- `ρ0::Union{Nothing, QuantumObject}=nothing`: The initial guess of the `steadystate` solution. If not specified, the initial guess will be handled by the solver.
 
 # Note
 Refer to [`LinearSolve.jl`](https://docs.sciml.ai/LinearSolve/stable/) for more details about the available algorithms. For example, the preconditioners can be defined directly in the solver like: `SteadyStateLinearSolver(alg = KrylovJL_GMRES(; precs = (A, p) -> (I, Diagonal(A))))`.
