@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/qutip/QuantumToolbox.jl/tree/main)
 
-- Add inital state support for `steadystate` when using SteadyStateLinearSolver.
+- Allow specifying initial guess for `SteadyStateLinearSolver`. ([#698])
 
 ## [v0.45.0]
 Release date: 2026-04-19
